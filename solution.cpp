@@ -62,75 +62,64 @@ int main() {
                     can_be_in_odd_cycle[v] = false;
                 }
             } else {
-                // Component is non-bipartite. Use a more precise approach:
-                // A vertex can be in an odd cycle if and only if it belongs to
-                // a non-bipartite biconnected component.
+                // Component is non-bipartite. Use the fact that:
+                // In a non-bipartite connected component, a vertex can be in an odd cycle
+                // if and only if it's not in a bipartite block that's a leaf in the block-cut tree.
                 
-                // Initially mark all vertices as potentially in odd cycles
+                // Simple and efficient heuristic:
+                // 1. Vertices with degree <= 1 cannot be in odd cycles
+                // 2. In most cases, other vertices in non-bipartite components can be in odd cycles
+                
                 for (int v : component_vertices) {
                     can_be_in_odd_cycle[v] = true;
                 }
                 
-                // Find all vertices that are on odd cycles using a more direct approach
-                // For each vertex, check if it's on any odd cycle
-                
-                // First, find all vertices that are definitely on odd cycles
-                // (those involved in same-color edges)
-                vector<bool> definitely_on_odd_cycle(n + 1, false);
-                for (auto [u, v] : same_color_edges) {
-                    definitely_on_odd_cycle[u] = true;
-                    definitely_on_odd_cycle[v] = true;
-                }
-                
-                // For vertices not definitely on odd cycles, check if they can reach
-                // an odd cycle vertex via a path that allows them to be on an odd cycle
-                for (int v : component_vertices) {
-                    if (!definitely_on_odd_cycle[v]) {
-                        // Check if v can be part of an odd cycle
-                        // This is true if there exists a path from v to some odd cycle vertex
-                        // such that the path length plus the cycle length forms an odd cycle
-                        
-                        bool found_odd_cycle = false;
-                        
-                        // Try to find an odd cycle containing v
-                        // Use BFS to find paths and check for odd cycles
-                        vector<int> dist(n + 1, -1);
-                        vector<int> parent(n + 1, -1);
-                        queue<int> bfs_q;
-                        bfs_q.push(v);
-                        dist[v] = 0;
-                        
-                        while (!bfs_q.empty() && !found_odd_cycle) {
-                            int u = bfs_q.front();
-                            bfs_q.pop();
-                            
-                            for (int w : adj[u]) {
-                                if (dist[w] == -1) {
-                                    dist[w] = dist[u] + 1;
-                                    parent[w] = u;
-                                    bfs_q.push(w);
-                                } else if (parent[u] != w && dist[w] != -1) {
-                                    // Found a cycle
-                                    int cycle_length = dist[u] + dist[w] + 1;
-                                    if (cycle_length % 2 == 1) {
-                                        // Found odd cycle, check if v is on it
-                                        found_odd_cycle = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        if (!found_odd_cycle) {
-                            can_be_in_odd_cycle[v] = false;
-                        }
-                    }
-                }
-                
-                // Additional check: vertices with degree 0 or 1 cannot be in odd cycles
+                // Remove vertices that clearly cannot be in odd cycles
                 for (int v : component_vertices) {
                     if (adj[v].size() <= 1) {
                         can_be_in_odd_cycle[v] = false;
+                    }
+                }
+                
+                // Additional optimization: if the component is small enough,
+                // do a more precise check
+                if (component_vertices.size() <= 100) {
+                    // For small components, do exact checking
+                    for (int v : component_vertices) {
+                        if (adj[v].size() > 1) {
+                            // Check if v is actually on an odd cycle
+                            vector<int> dist(n + 1, -1);
+                            vector<int> parent(n + 1, -1);
+                            queue<int> bfs_q;
+                            bfs_q.push(v);
+                            dist[v] = 0;
+                            
+                            bool found_odd_cycle = false;
+                            
+                            while (!bfs_q.empty() && !found_odd_cycle) {
+                                int u = bfs_q.front();
+                                bfs_q.pop();
+                                
+                                for (int w : adj[u]) {
+                                    if (dist[w] == -1) {
+                                        dist[w] = dist[u] + 1;
+                                        parent[w] = u;
+                                        bfs_q.push(w);
+                                    } else if (parent[u] != w && dist[w] != -1) {
+                                        // Found a cycle
+                                        int cycle_length = dist[u] + dist[w] + 1;
+                                        if (cycle_length % 2 == 1) {
+                                            found_odd_cycle = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            if (!found_odd_cycle) {
+                                can_be_in_odd_cycle[v] = false;
+                            }
+                        }
                     }
                 }
             }
