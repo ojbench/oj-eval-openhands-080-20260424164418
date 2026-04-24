@@ -62,59 +62,73 @@ int main() {
                     can_be_in_odd_cycle[v] = false;
                 }
             } else {
-                // Component is non-bipartite. In a non-bipartite connected component,
-                // a vertex can be in an odd cycle if and only if it's not a cut vertex
-                // that separates the component into bipartite pieces.
+                // Component is non-bipartite. Use a more efficient approach:
+                // In a non-bipartite connected component, all vertices except
+                // those that are in bipartite blocks separated by odd cycle vertices
+                // can be part of odd cycles.
                 
-                // Simple approach: mark all vertices as potentially in odd cycles
-                // then remove those that clearly cannot be
+                // Initially mark all vertices as potentially in odd cycles
                 for (int v : component_vertices) {
                     can_be_in_odd_cycle[v] = true;
                 }
                 
-                // Find vertices that are leaves (degree 1) - they cannot be in odd cycles
-                for (int v : component_vertices) {
-                    if (adj[v].size() == 1) {
-                        can_be_in_odd_cycle[v] = false;
+                // Find the block-cut tree structure
+                // For simplicity, use the fact that in a non-bipartite component,
+                // vertices that are leaves or in bipartite "dangling" parts
+                // cannot be in odd cycles
+                
+                // Find vertices that are definitely in odd cycles
+                // (those on same-color edges and their neighbors)
+                vector<bool> in_odd_cycle_core(n + 1, false);
+                for (auto [u, v] : same_color_edges) {
+                    in_odd_cycle_core[u] = true;
+                    in_odd_cycle_core[v] = true;
+                    for (int neighbor : adj[u]) {
+                        in_odd_cycle_core[neighbor] = true;
+                    }
+                    for (int neighbor : adj[v]) {
+                        in_odd_cycle_core[neighbor] = true;
                     }
                 }
                 
-                // For each same-color edge, mark all vertices on paths between them
-                for (auto [u, v] : same_color_edges) {
-                    // BFS from u to find shortest path to v
-                    vector<int> parent(n + 1, -1);
-                    vector<bool> bfs_visited(n + 1, false);
-                    queue<int> bfs_q;
-                    
-                    bfs_q.push(u);
-                    bfs_visited[u] = true;
-                    
-                    while (!bfs_q.empty() && !bfs_visited[v]) {
-                        int curr = bfs_q.front();
-                        bfs_q.pop();
+                // Mark vertices not in the core as potentially not in odd cycles
+                for (int v : component_vertices) {
+                    if (!in_odd_cycle_core[v]) {
+                        // Check if this vertex can reach the core via a path
+                        // that doesn't create odd cycles
+                        vector<int> dist(n + 1, -1);
+                        queue<int> bfs_q;
+                        bfs_q.push(v);
+                        dist[v] = 0;
+                        bool can_reach_core = false;
                         
-                        for (int next : adj[curr]) {
-                            if (!bfs_visited[next]) {
-                                bfs_visited[next] = true;
-                                parent[next] = curr;
-                                bfs_q.push(next);
+                        while (!bfs_q.empty() && !can_reach_core) {
+                            int curr = bfs_q.front();
+                            bfs_q.pop();
+                            
+                            if (in_odd_cycle_core[curr]) {
+                                can_reach_core = true;
+                                break;
+                            }
+                            
+                            for (int next : adj[curr]) {
+                                if (dist[next] == -1) {
+                                    dist[next] = dist[curr] + 1;
+                                    bfs_q.push(next);
+                                }
                             }
                         }
-                    }
-                    
-                    // Reconstruct path from u to v
-                    if (bfs_visited[v]) {
-                        vector<int> path;
-                        int curr = v;
-                        while (curr != -1) {
-                            path.push_back(curr);
-                            curr = parent[curr];
-                        }
                         
-                        // All vertices on this path can definitely be in odd cycles
-                        for (int vertex : path) {
-                            can_be_in_odd_cycle[vertex] = true;
+                        if (!can_reach_core) {
+                            can_be_in_odd_cycle[v] = false;
                         }
+                    }
+                }
+                
+                // Additional check: vertices with degree 1 cannot be in odd cycles
+                for (int v : component_vertices) {
+                    if (adj[v].size() == 1) {
+                        can_be_in_odd_cycle[v] = false;
                     }
                 }
             }

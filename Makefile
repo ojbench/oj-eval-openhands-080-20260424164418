@@ -129,43 +129,6 @@ code/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/code.dir/build.make CMakeFiles/code.dir/build
 .PHONY : code/fast
 
-#=============================================================================
-# Target rules for targets named debug
-
-# Build rule for target.
-debug: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 debug
-.PHONY : debug
-
-# fast build rule for target.
-debug/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/debug.dir/build.make CMakeFiles/debug.dir/build
-.PHONY : debug/fast
-
-debug.o: debug.cpp.o
-.PHONY : debug.o
-
-# target to build an object file
-debug.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/debug.dir/build.make CMakeFiles/debug.dir/debug.cpp.o
-.PHONY : debug.cpp.o
-
-debug.i: debug.cpp.i
-.PHONY : debug.i
-
-# target to preprocess a source file
-debug.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/debug.dir/build.make CMakeFiles/debug.dir/debug.cpp.i
-.PHONY : debug.cpp.i
-
-debug.s: debug.cpp.s
-.PHONY : debug.s
-
-# target to generate assembly for a file
-debug.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/debug.dir/build.make CMakeFiles/debug.dir/debug.cpp.s
-.PHONY : debug.cpp.s
-
 solution.o: solution.cpp.o
 .PHONY : solution.o
 
@@ -199,10 +162,6 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... code"
-	@echo "... debug"
-	@echo "... debug.o"
-	@echo "... debug.i"
-	@echo "... debug.s"
 	@echo "... solution.o"
 	@echo "... solution.i"
 	@echo "... solution.s"
